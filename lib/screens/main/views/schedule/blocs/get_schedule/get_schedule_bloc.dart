@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:kaerel/utils/utils.dart';
 import 'package:kaerel_repository/src/models/base_response.dart';
 import 'package:kaerel/network/api_service.dart';
 import 'package:kaerel_repository/kaerel_repository.dart';
@@ -19,7 +20,8 @@ class GetScheduleBloc extends Bloc<GetScheduleEvent, GetScheduleState> {
         dynamic data = await apiService.getScheduleByStationId(event.stationId);
         BaseResponse<Schedule> baseResponse = BaseResponse<Schedule>.fromJsonA(data, (json) => Schedule.fromJson(json));
         List<Schedule> listTrainStation = baseResponse.data;
-        emit(GetScheduleListSuccess(listTrainStation));
+        List<StationSchedule> listStationSchedule = groupSchedulesByDestination(listTrainStation);
+        emit(GetScheduleListSuccess(listStationSchedule));
       } catch (e) {
         emit(GetScheduleListFailure());
       }

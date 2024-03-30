@@ -69,14 +69,7 @@ class MainScreenState extends State<MainScreen> {
               )),
           body: TabBarView(
             children: [
-              MultiBlocProvider(providers: [
-                BlocProvider(
-                  create: (context) => GetStationBloc()..add(const GetStation()),
-                ),
-                BlocProvider(
-                  create: (context) => GetScheduleBloc(),
-                ),
-              ], child: ScheduleScreen()),
+              ScheduleScreen(),
               const SettingsScreen()
             ],
           ),

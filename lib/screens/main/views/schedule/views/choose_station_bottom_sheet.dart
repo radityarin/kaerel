@@ -88,7 +88,7 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
             suffixIcon: IconButton(
               icon: Icon(Icons.clear_rounded),
               onPressed: () {
-                searchController.clear(); // Clear the text field
+                searchController.clear();
               },
             ),
             floatingLabelBehavior: FloatingLabelBehavior.never,
@@ -133,7 +133,8 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                       color: filteredStations[index].isSelected
                           ? KaerelColor.green4
                           : Colors.white,
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12)
+                      ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(

@@ -11,9 +11,10 @@ final class GetScheduleListInitial extends GetScheduleState {}
 final class GetScheduleListLoading extends GetScheduleState {}
 final class GetScheduleListFailure extends GetScheduleState {}
 final class GetScheduleListSuccess extends GetScheduleState {
-  final List<Schedule> scheduleList;
 
-  const GetScheduleListSuccess(this.scheduleList);
+  final List<StationSchedule> listStationSchedule;
+
+  const GetScheduleListSuccess(this.listStationSchedule);
 
   @override
   List<Object> get props => [];
