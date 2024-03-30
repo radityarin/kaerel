@@ -1,3 +1,4 @@
 library kaerel_repository;
 
-export 'src/models/trains_station.dart';
+export 'src/models/station.dart';
+export 'src/models/schedule.dart';

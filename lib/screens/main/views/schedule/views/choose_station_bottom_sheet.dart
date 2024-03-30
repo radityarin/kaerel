@@ -7,10 +7,14 @@ import '../../../../../components/components.dart';
 import '../../../../../resources/colors/colors.dart';
 
 class BottomSheetWidget extends StatefulWidget {
-  final List<TrainStation> stationList;
-  final Function(TrainStation) onSelect;
+  final List<Station> stationList;
+  final bool isOrigin;
+  final Function(Station) onSelect;
 
-  BottomSheetWidget({required this.stationList, required this.onSelect});
+  BottomSheetWidget(
+      {required this.stationList,
+      required this.isOrigin,
+      required this.onSelect});
 
   @override
   _BottomSheetWidgetState createState() => _BottomSheetWidgetState();
@@ -23,15 +27,38 @@ class BottomSheetWidget extends StatefulWidget {
 }
 
 class _BottomSheetWidgetState extends State<BottomSheetWidget> {
-  ScrollController _controller = ScrollController();
-  double _listViewHeight = 400;
+  List<Station> filteredStations = List.empty(growable: true);
+  TextEditingController searchController = TextEditingController();
   bool isStationSelected = false;
-  TrainStation selectedTrainStation = TrainStation.placeholder();
+  Station selectedTrainStation = Station.placeholder();
+  String questionPlaceholder = '';
 
   @override
   void initState() {
     widget.resetSelectedStationList();
+    filteredStations = widget.stationList;
+    searchController.addListener(filterStations);
+    questionPlaceholder = widget.isOrigin
+        ? 'Mau berangkat dari stasiun mana?'
+        : 'Mau ke stasiun mana?';
     super.initState();
+  }
+
+  void filterStations() {
+    String query = searchController.text.toLowerCase();
+    setState(() {
+      filteredStations = widget.stationList
+          .where((station) =>
+              station.name.toLowerCase().contains(query) ||
+              station.id.toLowerCase().contains(query))
+          .toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -39,32 +66,51 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.all(16.0),
-        child: const Text(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Text(
           textAlign: TextAlign.start,
-          'Mau berangkat dari stasiun apa?',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          questionPlaceholder,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       Container(
-        height: 92,
+        height: 80,
         padding: const EdgeInsets.all(16),
         child: TextField(
+          cursorColor: Colors.black,
+          controller: searchController,
           decoration: InputDecoration(
+            filled: true,
+            fillColor: KaerelColor.greyBorder,
+            focusColor: Colors.black,
             labelText: 'Ketik stasiunmu disini..',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-            prefixIcon: const Icon(Icons.search),
+            prefixIcon: Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.clear_rounded),
+              onPressed: () {
+                searchController.clear(); // Clear the text field
+              },
+            ),
+            floatingLabelBehavior: FloatingLabelBehavior.never,
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            contentPadding: EdgeInsets.all(4.0),
           ),
         ),
       ),
-      customDivider(8),
+      customDivider(4),
       AnimatedContainer(
-        height: _listViewHeight,
+        height: 400,
         duration: const Duration(milliseconds: 150),
         child: ListView.builder(
-          controller: _controller,
           shrinkWrap: true,
-          itemCount: widget.stationList.length,
+          itemCount: filteredStations.length,
           itemBuilder: (context, index) {
             return Padding(
               padding:
@@ -73,19 +119,18 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                 onTap: () {
                   setState(() {
                     widget.resetSelectedStationList();
-                    widget.stationList[index].isSelected = true;
-                    selectedTrainStation = widget.stationList[index];
+                    filteredStations[index].isSelected = true;
+                    selectedTrainStation = filteredStations[index];
                     isStationSelected = true;
-                    // _listViewHeight = 300;
                   });
                 },
                 child: Container(
                   decoration: BoxDecoration(
                       border: Border.all(
-                          color: widget.stationList[index].isSelected
+                          color: filteredStations[index].isSelected
                               ? KaerelColor.greenBorder
                               : KaerelColor.greyBorder),
-                      color: widget.stationList[index].isSelected
+                      color: filteredStations[index].isSelected
                           ? KaerelColor.green4
                           : Colors.white,
                       borderRadius: BorderRadius.circular(12)),
@@ -111,8 +156,8 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                               children: [
                                 Text(
                                   capitalizeFirstLetter(
-                                      widget.stationList[index].name),
-                                  style: TextStyle(
+                                      filteredStations[index].name),
+                                  style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500),
                                 ),
@@ -126,8 +171,8 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                                       borderRadius: BorderRadius.circular(4)),
                                   child: Text(
                                     textAlign: TextAlign.start,
-                                    widget.stationList[index].id,
-                                    style: TextStyle(
+                                    filteredStations[index].id,
+                                    style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold),
                                   ),
@@ -142,20 +187,20 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                             Row(
                               children: [
                                 Text(
-                                  widget.stationList[index].haveSchedule
-                                      ? 'Schedule\nAvailable'
-                                      : 'Schedule\nNot Available',
+                                  filteredStations[index].haveSchedule
+                                      ? 'Jadwal\nTersedia'
+                                      : 'Jadwal\nTidak Tersedia',
                                   style: TextStyle(
                                       color:
-                                          widget.stationList[index].haveSchedule
+                                          filteredStations[index].haveSchedule
                                               ? KaerelColor.green1
                                               : Colors.red,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Image.asset(
-                                  widget.stationList[index].haveSchedule
+                                  filteredStations[index].haveSchedule
                                       ? 'assets/check.png'
                                       : 'assets/close.png',
                                   scale: 3,
@@ -202,7 +247,7 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
   }
 
   void checkIsSelected() {
-    for (var trainStation in widget.stationList) {
+    for (var trainStation in filteredStations) {
       isStationSelected = trainStation.isSelected;
     }
   }

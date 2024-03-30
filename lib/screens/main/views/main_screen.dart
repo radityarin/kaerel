@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kaerel/resources/colors/colors.dart';
-import 'package:kaerel/screens/main/views/station/blocs/station_bloc.dart';
-import 'package:kaerel/screens/main/views/home/views/home_screen.dart';
+import 'package:kaerel/screens/main/views/schedule/blocs/get_schedule/get_schedule_bloc.dart';
+import 'package:kaerel/screens/main/views/schedule/blocs/get_station/get_station_bloc.dart';
+import 'package:kaerel/screens/main/views/schedule/views/schedule_screen.dart';
 import 'package:kaerel/screens/main/views/settings/views/settings_screen.dart';
-import 'package:kaerel/screens/main/views/station/views/station_screen.dart';
-
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +17,7 @@ class MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 3,
+        length: 2,
         child: Scaffold(
           appBar: AppBar(
               backgroundColor: KaerelColor.green2,
@@ -60,9 +59,6 @@ class MainScreenState extends State<MainScreen> {
                             text: 'Jadwal',
                           ),
                           Tab(
-                            text: 'Stasiun',
-                          ),
-                          Tab(
                             text: 'Settings',
                           ),
                         ],
@@ -73,15 +69,15 @@ class MainScreenState extends State<MainScreen> {
               )),
           body: TabBarView(
             children: [
-              BlocProvider(
-                create: (context) => StationBloc()..add(GetStation()),
-                child: HomeScreen(),
-              ),
-              BlocProvider(
-                create: (context) => StationBloc()..add(GetStation()),
-                child: StationScreen(),
-              ),
-              SettingsScreen(),
+              MultiBlocProvider(providers: [
+                BlocProvider(
+                  create: (context) => GetStationBloc()..add(const GetStation()),
+                ),
+                BlocProvider(
+                  create: (context) => GetScheduleBloc(),
+                ),
+              ], child: ScheduleScreen()),
+              const SettingsScreen()
             ],
           ),
         ));

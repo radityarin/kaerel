@@ -1,4 +1,4 @@
-class TrainStation {
+class Station {
   final String id;
   final String name;
   final int daop;
@@ -7,7 +7,7 @@ class TrainStation {
   final DateTime updatedAt;
   bool isSelected = false;
 
-  TrainStation({
+  Station({
     required this.id,
     required this.name,
     required this.daop,
@@ -16,8 +16,8 @@ class TrainStation {
     required this.updatedAt,
   });
 
-  factory TrainStation.fromJson(Map<String, dynamic> json) {
-    return TrainStation(
+  factory Station.fromJson(Map<String, dynamic> json) {
+    return Station(
       id: json['id'],
       name: json['name'],
       daop: json['daop'],
@@ -27,8 +27,8 @@ class TrainStation {
     );
   }
 
-  static TrainStation placeholder() {
-    return TrainStation(
+  static Station placeholder() {
+    return Station(
       id: '',
       name: '',
       daop: 0,

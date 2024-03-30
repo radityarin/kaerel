@@ -11,5 +11,8 @@ class KaerelColor {
   static Color blue2 = Colour('#00AED5');
   static Color blue3 = Colour('#38BBDA');
   static Color greyBorder = Colour ('#E8E8E8');
+  static Color grey1 = Colour('#FAFAFA');
+  static Color greyHint = Colour('#999798');
   static Color greenBorder = Colour ('#097210');
+  static Color orange1 = Colour('#F06400');
 }
