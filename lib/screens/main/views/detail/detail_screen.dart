@@ -11,20 +11,23 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: KaerelColor.green2,
-        title: Text('Detail Page'),
-        centerTitle: true, // Center the title
-        leading: IconButton(
-          icon: Icon(Icons.close), // Close button
-          onPressed: () {
-            Navigator.pop(context); // Pop the current route off the navigation stack
-          },
+    return Hero(
+      tag: "detailScreen",
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: KaerelColor.green2,
+          title: Text('Detail Page'),
+          centerTitle: true, // Center the title
+          leading: IconButton(
+            icon: Icon(Icons.close), // Close button
+            onPressed: () {
+              Navigator.pop(context); // Pop the current route off the navigation stack
+            },
+          ),
         ),
-      ),
-      body: Center(
-        child: Text('Detail for Item ${stationSchedule.destination}'),
+        body: Center(
+          child: Text('Detail for Item ${stationSchedule.destination}'),
+        ),
       ),
     );
   }

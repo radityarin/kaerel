@@ -7,6 +7,7 @@ class StationSchedule {
   final String color;
   final Schedule upcomingSchedules;
   final List<Schedule> listSchedule;
+  bool isSelected = false;
 
   StationSchedule({
     required this.destination,

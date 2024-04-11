@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kaerel/resources/colors/colors.dart';
-import 'package:kaerel/screens/main/views/schedule/blocs/get_schedule/get_schedule_bloc.dart';
-import 'package:kaerel/screens/main/views/schedule/blocs/get_station/get_station_bloc.dart';
 import 'package:kaerel/screens/main/views/schedule/views/schedule_screen.dart';
 import 'package:kaerel/screens/main/views/settings/views/settings_screen.dart';
 

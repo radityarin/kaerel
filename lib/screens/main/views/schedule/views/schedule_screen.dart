@@ -77,28 +77,55 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             );
           });
     } else {
-      showModalBottomSheet(
-          showDragHandle: true,
-          elevation: 0,
-          backgroundColor: Colors.white,
-          isScrollControlled: true,
-          context: context,
-          builder: (BuildContext context) {
-            return BottomSheetWidget(
-                stationList: stationList,
-                isOrigin: isOrigin,
-                onSelect: (Station trainStation) {
-                  _getScheduleBloc.add(GetSchedule(trainStation.id));
-                  setState(() {
-                    if (isOrigin) {
-                      originStation = trainStation;
-                      originStationName = trainStation.name;
-                    } else {
-                      destinationStationName = trainStation.name;
-                    }
+      if (isOrigin) {
+        showModalBottomSheet(
+            showDragHandle: true,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            isScrollControlled: true,
+            context: context,
+            builder: (BuildContext context) {
+              return BottomSheetWidget(
+                  stationList: stationList,
+                  scheduleList: List.empty(growable: true),
+                  isOrigin: isOrigin,
+                  onSelect: (Station trainStation) {
+                    _getScheduleBloc.add(GetSchedule(trainStation.id));
+                    setState(() {
+                      if (isOrigin) {
+                        originStation = trainStation;
+                        originStationName = trainStation.name;
+                      } else {
+                        destinationStationName = trainStation.name;
+                      }
+                    });
                   });
-                });
-          });
+            });
+      } else {
+        showModalBottomSheet(
+            showDragHandle: true,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            isScrollControlled: true,
+            context: context,
+            builder: (BuildContext context) {
+              return BottomSheetWidget(
+                  stationList: stationList,
+                  scheduleList: scheduleList,
+                  isOrigin: isOrigin,
+                  onSelect: (Station trainStation) {
+                    _getScheduleBloc.add(GetSchedule(trainStation.id));
+                    setState(() {
+                      if (isOrigin) {
+                        originStation = trainStation;
+                        originStationName = trainStation.name;
+                      } else {
+                        destinationStationName = trainStation.name;
+                      }
+                    });
+                  });
+            });
+      }
     }
   }
 
@@ -215,8 +242,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   String colorCode = stationSchedule.color;
                   String line = stationSchedule.line;
                   String route = stationSchedule.route;
-                  Schedule upcomingSchedules =
-                      getNextUpcomingSchedules(stationSchedule.listSchedule)[0];
+                  List<Schedule> nextUpcomingSchedules =
+                      getNextUpcomingSchedules(stationSchedule.listSchedule);
+                  Schedule upcomingSchedules = nextUpcomingSchedules.isNotEmpty
+                      ? nextUpcomingSchedules[0]
+                      : Schedule.empty();
                   String upcomingTimeEstimated =
                       extractTime(upcomingSchedules.timeEstimated);
                   String upcomingRemainingTime =
@@ -225,86 +255,107 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                DetailScreen(stationSchedule: stationSchedule)),
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) {
+                            return DetailScreen(
+                                stationSchedule: stationSchedule);
+                          },
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            var begin = Offset.zero;
+                            var end = Offset.zero;
+                            var curve = Curves.easeInOut;
+
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                        ),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          bottom: 16.0, left: 16.0, right: 16.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                            border: Border.all(color: KaerelColor.greyBorder),
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Kereta tujuan',
-                              style: TextStyle(fontWeight: FontWeight.w200),
-                            ),
-                            customDivider(8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Color(int.parse(
-                                                    colorCode.substring(1, 7),
-                                                    radix: 16) +
-                                                0xFF000000),
+                    child: Hero(
+                      tag: "detailScreen", // Same unique tag as in DetailScreen
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: 16.0, left: 16.0, right: 16.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                              border: Border.all(color: KaerelColor.greyBorder),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Kereta tujuan',
+                                style: TextStyle(fontWeight: FontWeight.w200),
+                              ),
+                              customDivider(8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Color(int.parse(
+                                                      colorCode.substring(1, 7),
+                                                      radix: 16) +
+                                                  0xFF000000),
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          capitalizeFirstLetter(destination),
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          upcomingTimeEstimated,
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        Text(
-                                          upcomingRemainingTime,
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w300),
-                                        ),
-                                      ],
-                                    )
-                                  ],
-                                ),
-                                customDivider(8),
-                                Text(
-                                  route,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w300),
-                                ),
-                              ],
-                            ),
-                          ],
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            capitalizeFirstLetter(destination),
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            upcomingTimeEstimated,
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                          Text(
+                                            upcomingRemainingTime,
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w300),
+                                          ),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                  customDivider(8),
+                                  Text(
+                                    route,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w300),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

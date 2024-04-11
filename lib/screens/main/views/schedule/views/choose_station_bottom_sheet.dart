@@ -8,11 +8,13 @@ import '../../../../../resources/colors/colors.dart';
 
 class BottomSheetWidget extends StatefulWidget {
   final List<Station> stationList;
+  final List<StationSchedule> scheduleList;
   final bool isOrigin;
   final Function(Station) onSelect;
 
   BottomSheetWidget(
       {required this.stationList,
+      required this.scheduleList,
       required this.isOrigin,
       required this.onSelect});
 
@@ -20,23 +22,32 @@ class BottomSheetWidget extends StatefulWidget {
   _BottomSheetWidgetState createState() => _BottomSheetWidgetState();
 
   void resetSelectedStationList() {
-    for (var trainStation in stationList) {
-      trainStation.isSelected = false;
+    if (isOrigin) {
+      for (var trainStation in stationList) {
+        trainStation.isSelected = false;
+      }
+    } else {
+      for (var schedule in scheduleList) {
+        schedule.isSelected = false;
+      }
     }
   }
 }
 
 class _BottomSheetWidgetState extends State<BottomSheetWidget> {
   List<Station> filteredStations = List.empty(growable: true);
+  List<StationSchedule> filteredStationsSchedule = List.empty(growable: true);
   TextEditingController searchController = TextEditingController();
   bool isStationSelected = false;
   Station selectedTrainStation = Station.placeholder();
+  StationSchedule selectedTrainStationSchedule = StationSchedule.placeholder();
   String questionPlaceholder = '';
 
   @override
   void initState() {
     widget.resetSelectedStationList();
     filteredStations = widget.stationList;
+    filteredStationsSchedule = widget.scheduleList;
     searchController.addListener(filterStations);
     questionPlaceholder = widget.isOrigin
         ? 'Mau berangkat dari stasiun mana?'
@@ -46,13 +57,22 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
 
   void filterStations() {
     String query = searchController.text.toLowerCase();
-    setState(() {
-      filteredStations = widget.stationList
-          .where((station) =>
-              station.name.toLowerCase().contains(query) ||
-              station.id.toLowerCase().contains(query))
-          .toList();
-    });
+    if (widget.isOrigin) {
+      setState(() {
+        filteredStations = widget.stationList
+            .where((station) =>
+                station.name.toLowerCase().contains(query) ||
+                station.id.toLowerCase().contains(query))
+            .toList();
+      });
+    } else {
+      setState(() {
+        filteredStationsSchedule = widget.scheduleList
+            .where((station) =>
+                station.destination.toLowerCase().contains(query))
+            .toList();
+      });
+    }
   }
 
   @override
@@ -105,8 +125,45 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
         ),
       ),
       customDivider(4),
-      AnimatedContainer(
-        height: 400,
+      showStationList(),
+      customDivider(8),
+      Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                spreadRadius: 0,
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(),
+              Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: mainButton("Pilih aku", isStationSelected, () {
+                    widget.onSelect(selectedTrainStation);
+                    Navigator.pop(context);
+                  })),
+              customDivider(32)
+            ],
+          ))
+    ]);
+  }
+
+  void checkIsSelected() {
+    for (var trainStation in filteredStations) {
+      isStationSelected = trainStation.isSelected;
+    }
+  }
+
+  Widget showStationList() {
+    if (widget.isOrigin) {
+      return AnimatedContainer(
+        height: 300,
         duration: const Duration(milliseconds: 150),
         child: ListView.builder(
           shrinkWrap: true,
@@ -218,38 +275,122 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
             );
           },
         ),
-      ),
-      customDivider(8),
-      Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                spreadRadius: 0,
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+      );
+    } else {
+      return AnimatedContainer(
+        height: 300,
+        duration: const Duration(milliseconds: 150),
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: filteredStationsSchedule.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding:
+                  const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    widget.resetSelectedStationList();
+                    filteredStationsSchedule[index].isSelected = true;
+                    selectedTrainStationSchedule = filteredStationsSchedule[index];
+                    isStationSelected = true;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                          color: filteredStationsSchedule[index].isSelected
+                              ? KaerelColor.greenBorder
+                              : KaerelColor.greyBorder),
+                      color: filteredStationsSchedule[index].isSelected
+                          ? KaerelColor.green4
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12)
+                      ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  FontAwesomeIcons.train,
+                                  color: KaerelColor.green2,
+                                )
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  capitalizeFirstLetter(
+                                      filteredStationsSchedule[index].destination),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0, vertical: 4.0),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: KaerelColor.greyBorder),
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: Text(
+                                    textAlign: TextAlign.start,
+                                    filteredStationsSchedule[index].route,
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  filteredStationsSchedule[index].listSchedule.isNotEmpty
+                                      ? 'Jadwal\nTersedia'
+                                      : 'Jadwal\nTidak Tersedia',
+                                  style: TextStyle(
+                                      color:
+                                          filteredStationsSchedule[index].listSchedule.isNotEmpty
+                                              ? KaerelColor.green1
+                                              : Colors.red,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12),
+                                ),
+                                const SizedBox(width: 8),
+                                Image.asset(
+                                  filteredStationsSchedule[index].listSchedule.isNotEmpty
+                                      ? 'assets/check.png'
+                                      : 'assets/close.png',
+                                  scale: 3,
+                                ),
+                              ],
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(),
-              Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: mainButton("Pilih aku", isStationSelected, () {
-                    widget.onSelect(selectedTrainStation);
-                    Navigator.pop(context);
-                  })),
-              customDivider(32)
-            ],
-          ))
-    ]);
-  }
-
-  void checkIsSelected() {
-    for (var trainStation in filteredStations) {
-      isStationSelected = trainStation.isSelected;
+            );
+          },
+        ),
+      );
     }
   }
 }
