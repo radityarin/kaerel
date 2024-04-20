@@ -1,3 +1,5 @@
+
+
 import 'package:kaerel_repository/kaerel_repository.dart';
 
 String capitalizeFirstLetter(String text) {
@@ -21,33 +23,47 @@ List<StationSchedule> groupSchedulesByDestination(List<Schedule> schedules) {
       route: listSchedule[0].route,
       line: listSchedule[0].line,
       color: listSchedule[0].color,
-      upcomingSchedules: listSchedule[0],
       listSchedule: listSchedule,
     ));
   });
 
+  stationSchedules.sort((a, b) => a.getUpcomingScheduleTimeRemaining().compareTo(b.getUpcomingScheduleTimeRemaining()));
+
   return stationSchedules;
 }
 
-String getRemainingTimeUntil(String targetTime) {
-  DateTime currentTime = DateTime.now();
-  List<String> timeParts = targetTime.split(':');
-  int hours = int.parse(timeParts[0]);
-  int minutes = int.parse(timeParts[1]);
-  int seconds = int.parse(timeParts[2]);
-  DateTime targetDateTime = DateTime(
-    currentTime.year,
-    currentTime.month,
-    currentTime.day,
-    hours,
-    minutes,
-    seconds,
-  );
-  int remainingMinutes = targetDateTime.difference(currentTime).inMinutes + 1;
-  return 'dalam $remainingMinutes menit';
+String getRemainingTimeUntilString(String targetTime) {
+  if (targetTime.isEmpty) {
+    return 'belum ada estimasi';
+  } else {
+    int? remainingMinutes = getRemainingTimeUntil(targetTime);
+    return 'dalam $remainingMinutes menit';
+  }
 }
 
-List<Schedule> getNextUpcomingSchedules(List<Schedule> schedules) {
+int getRemainingTimeUntil(String targetTime) {
+  if (targetTime.isEmpty) {
+    return -100;
+  } else {
+    DateTime currentTime = DateTime.now();
+    List<String> timeParts = targetTime.split(':');
+    int hours = int.parse(timeParts[0]);
+    int minutes = int.parse(timeParts[1]);
+    int seconds = int.parse(timeParts[2]);
+    DateTime targetDateTime = DateTime(
+      currentTime.year,
+      currentTime.month,
+      currentTime.day,
+      hours,
+      minutes,
+      seconds,
+    );
+    int remainingMinutes = targetDateTime.difference(currentTime).inMinutes + 1;
+    return remainingMinutes;
+  }
+}
+
+List<Schedule> sortToNextUpcomingSchedules(List<Schedule> schedules) {
   DateTime now = DateTime.now();
   DateTime currentDate = DateTime(now.year, now.month, now.day);
 
@@ -105,11 +121,36 @@ List<Schedule> sortSchedules(List<Schedule> schedules) {
   schedules.sort((a, b) {
     List<String> partsA = a.timeEstimated.split(':');
     List<String> partsB = b.timeEstimated.split(':');
-    DateTime timeA = DateTime(2000, 1, 1, int.parse(partsA[0]), int.parse(partsA[1]));
-    DateTime timeB = DateTime(2000, 1, 1, int.parse(partsB[0]), int.parse(partsB[1]));
-    
+    DateTime timeA =
+        DateTime(2000, 1, 1, int.parse(partsA[0]), int.parse(partsA[1]));
+    DateTime timeB =
+        DateTime(2000, 1, 1, int.parse(partsB[0]), int.parse(partsB[1]));
+
     return timeA.compareTo(timeB);
   });
-  
+
   return schedules;
+}
+
+List<Schedule> filterPassedSchedules(List<Schedule> schedules) {
+  // Get the current time
+  DateTime currentTime = DateTime.now();
+
+  // Filter schedules where timeEstimated has not passed the current time
+  List<Schedule> filteredSchedules = schedules.where((schedule) {
+    // Parse timeEstimated to DateTime object
+    DateTime estimatedTime = DateTime(
+      currentTime.year,
+      currentTime.month,
+      currentTime.day,
+      int.parse(schedule.timeEstimated.split(':')[0]), // Hour
+      int.parse(schedule.timeEstimated.split(':')[1]), // Minute
+      int.parse(schedule.timeEstimated.split(':')[2]), // Second
+    );
+
+    // Compare estimatedTime with current time
+    return estimatedTime.isAfter(currentTime);
+  }).toList();
+
+  return filteredSchedules;
 }

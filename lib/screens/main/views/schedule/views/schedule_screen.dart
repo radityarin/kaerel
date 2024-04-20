@@ -7,8 +7,9 @@ import 'package:kaerel/screens/main/views/detail/detail_screen.dart';
 import 'package:kaerel/screens/main/views/schedule/blocs/get_schedule/get_schedule_bloc.dart';
 import 'package:kaerel/screens/main/views/schedule/blocs/get_station/get_station_bloc.dart';
 import 'package:kaerel/screens/main/views/schedule/views/loading.dart';
-import 'package:kaerel/utils/utils.dart';
+
 import 'package:kaerel_repository/kaerel_repository.dart';
+import 'package:kaerel_utils/kaerel_utils.dart';
 
 import 'choose_station_bottom_sheet.dart';
 
@@ -51,6 +52,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               customDivider(16),
               chooseStation(context),
               customDivider(16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Divider(height: 0.5, color: KaerelColor.greyBorder),
+              ),
               showScheduleList()
             ],
           )),
@@ -86,20 +91,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             context: context,
             builder: (BuildContext context) {
               return BottomSheetWidget(
-                  stationList: stationList,
-                  scheduleList: List.empty(growable: true),
-                  isOrigin: isOrigin,
-                  onSelect: (Station trainStation) {
-                    _getScheduleBloc.add(GetSchedule(trainStation.id));
-                    setState(() {
-                      if (isOrigin) {
-                        originStation = trainStation;
-                        originStationName = trainStation.name;
-                      } else {
-                        destinationStationName = trainStation.name;
-                      }
-                    });
-                  });
+                      stationList: stationList,
+                      scheduleList: List.empty(growable: true),
+                      isOrigin: isOrigin)
+                  .setOnStationSelect((Station trainStation) {
+                _getScheduleBloc.add(GetSchedule(trainStation.id));
+                setState(() {
+                  originStation = trainStation;
+                  originStationName = trainStation.name;
+                });
+              });
             });
       } else {
         showModalBottomSheet(
@@ -110,20 +111,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             context: context,
             builder: (BuildContext context) {
               return BottomSheetWidget(
-                  stationList: stationList,
-                  scheduleList: scheduleList,
-                  isOrigin: isOrigin,
-                  onSelect: (Station trainStation) {
-                    _getScheduleBloc.add(GetSchedule(trainStation.id));
-                    setState(() {
-                      if (isOrigin) {
-                        originStation = trainStation;
-                        originStationName = trainStation.name;
-                      } else {
-                        destinationStationName = trainStation.name;
-                      }
-                    });
-                  });
+                      stationList: stationList,
+                      scheduleList: scheduleList,
+                      isOrigin: isOrigin)
+                  .setOnStationScheduleSelect(
+                      (StationSchedule selectedStationSchedule) {
+                destinationStationName = selectedStationSchedule.destination;
+                filterScheduleList();
+                setState(() {
+                  destinationStationName = selectedStationSchedule.destination;
+                  filterScheduleList();
+                });
+              });
             });
       }
     }
@@ -208,8 +207,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     });
   }
 
-  void getScheduleByOrigin(Station trainStation) {
-    _getScheduleBloc.add(GetSchedule(trainStation.id));
+  void filterScheduleList() {
+    scheduleList = scheduleList
+        .where((stationSchedule) => stationSchedule.destination
+            .toLowerCase()
+            .contains(destinationStationName.toLowerCase()))
+        .toList();
   }
 
   Widget showScheduleList() {
@@ -240,122 +243,90 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   StationSchedule stationSchedule = scheduleList[i];
                   String destination = stationSchedule.destination;
                   String colorCode = stationSchedule.color;
-                  String line = stationSchedule.line;
                   String route = stationSchedule.route;
-                  List<Schedule> nextUpcomingSchedules =
-                      getNextUpcomingSchedules(stationSchedule.listSchedule);
-                  Schedule upcomingSchedules = nextUpcomingSchedules.isNotEmpty
-                      ? nextUpcomingSchedules[0]
-                      : Schedule.empty();
-                  String upcomingTimeEstimated =
-                      extractTime(upcomingSchedules.timeEstimated);
-                  String upcomingRemainingTime =
-                      getRemainingTimeUntil(upcomingSchedules.timeEstimated);
+                  String upcomingTimeEstimated = stationSchedule.getUpcomingScheduleTimeEstimated();
+                  String upcomingRemainingTime = stationSchedule.getUpcomingScheduleTimeRemainingString();
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) {
-                            return DetailScreen(
-                                stationSchedule: stationSchedule);
-                          },
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                            var begin = Offset.zero;
-                            var end = Offset.zero;
-                            var curve = Curves.easeInOut;
-
-                            var tween = Tween(begin: begin, end: end)
-                                .chain(CurveTween(curve: curve));
-
-                            return SlideTransition(
-                              position: animation.drive(tween),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
+                      Navigator.of(context).push(PageRouteFromBottom(
+                          page:
+                              DetailScreen(stationSchedule: stationSchedule)));
                     },
-                    child: Hero(
-                      tag: "detailScreen", // Same unique tag as in DetailScreen
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            bottom: 16.0, left: 16.0, right: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                              border: Border.all(color: KaerelColor.greyBorder),
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Kereta tujuan',
-                                style: TextStyle(fontWeight: FontWeight.w200),
-                              ),
-                              customDivider(8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 32,
-                                            height: 32,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Color(int.parse(
-                                                      colorCode.substring(1, 7),
-                                                      radix: 16) +
-                                                  0xFF000000),
-                                            ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          bottom: 16.0, left: 16.0, right: 16.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: KaerelColor.greyBorder),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Kereta tujuan',
+                              style: TextStyle(fontWeight: FontWeight.w200),
+                            ),
+                            customDivider(8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(int.parse(
+                                                    colorCode.substring(1, 7),
+                                                    radix: 16) +
+                                                0xFF000000),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            capitalizeFirstLetter(destination),
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          Text(
-                                            upcomingTimeEstimated,
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                          Text(
-                                            upcomingRemainingTime,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w300),
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                  customDivider(8),
-                                  Text(
-                                    route,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w300),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          capitalizeFirstLetter(destination),
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          upcomingTimeEstimated,
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          upcomingRemainingTime,
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w300),
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                                customDivider(8),
+                                Text(
+                                  route,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w300),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -363,8 +334,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 }),
           ],
         );
-      } else {
+      } else if (state is GetScheduleListLoading) {
         return loadingScreen();
+      } else {
+        return initialPlaceholderScreen();
       }
     });
   }

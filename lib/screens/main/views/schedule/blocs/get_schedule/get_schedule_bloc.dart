@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:kaerel/utils/utils.dart';
 import 'package:kaerel_repository/src/models/base_response.dart';
 import 'package:kaerel/network/api_service.dart';
 import 'package:kaerel_repository/kaerel_repository.dart';
+import 'package:kaerel_utils/kaerel_utils.dart';
 
 part 'get_schedule_event.dart';
 part 'get_schedule_state.dart';

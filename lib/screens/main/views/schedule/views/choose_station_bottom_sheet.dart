@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:kaerel/utils/utils.dart';
 import 'package:kaerel_repository/kaerel_repository.dart';
+import 'package:kaerel_utils/kaerel_utils.dart';
 
 import '../../../../../components/components.dart';
 import '../../../../../resources/colors/colors.dart';
@@ -10,13 +10,23 @@ class BottomSheetWidget extends StatefulWidget {
   final List<Station> stationList;
   final List<StationSchedule> scheduleList;
   final bool isOrigin;
-  final Function(Station) onSelect;
+  late Function(Station) onSelect;
+  late Function(StationSchedule) onSelectStationSchedule;
 
   BottomSheetWidget(
       {required this.stationList,
       required this.scheduleList,
-      required this.isOrigin,
-      required this.onSelect});
+      required this.isOrigin});
+
+  Widget setOnStationSelect(Function(Station) onSelect) {
+    this.onSelect = onSelect;
+    return this;
+  }
+
+  Widget setOnStationScheduleSelect(Function(StationSchedule) onSelectStationSchedule) {
+    this.onSelectStationSchedule = onSelectStationSchedule;
+    return this;
+  }
 
   @override
   _BottomSheetWidgetState createState() => _BottomSheetWidgetState();
@@ -145,7 +155,11 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
               Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: mainButton("Pilih aku", isStationSelected, () {
-                    widget.onSelect(selectedTrainStation);
+                    if (widget.isOrigin) {
+                      widget.onSelect(selectedTrainStation);
+                    } else {
+                      widget.onSelectStationSchedule(selectedTrainStationSchedule);
+                    }
                     Navigator.pop(context);
                   })),
               customDivider(32)

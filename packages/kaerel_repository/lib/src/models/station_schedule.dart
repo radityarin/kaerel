@@ -1,11 +1,12 @@
 import 'package:kaerel_repository/src/models/schedule.dart';
+import 'package:kaerel_utils/kaerel_utils.dart';
+
 
 class StationSchedule {
   final String destination;
   final String route;
   final String line;
   final String color;
-  final Schedule upcomingSchedules;
   final List<Schedule> listSchedule;
   bool isSelected = false;
 
@@ -14,9 +15,28 @@ class StationSchedule {
     required this.route,
     required this.line,
     required this.color,
-    required this.upcomingSchedules,
     required this.listSchedule,
   });
+
+  List<Schedule> getNextUpcomingSchedules() {
+    return sortToNextUpcomingSchedules(listSchedule);
+  }
+
+  Schedule getUpcomingSchedule() {
+    return listSchedule.isNotEmpty ? getNextUpcomingSchedules()[0] : Schedule.empty();
+  }
+
+  String getUpcomingScheduleTimeEstimated() {
+    return extractTime(getUpcomingSchedule().timeEstimated);
+  }
+
+  String getUpcomingScheduleTimeRemainingString() {
+    return getRemainingTimeUntilString(getUpcomingSchedule().timeEstimated);
+  }
+
+  int getUpcomingScheduleTimeRemaining() {
+    return getRemainingTimeUntil(getUpcomingSchedule().timeEstimated);
+  }
 
   static StationSchedule placeholder() {
     return StationSchedule(
@@ -24,7 +44,6 @@ class StationSchedule {
       route: '',
       line: '',
       color: '',
-      upcomingSchedules: Schedule.empty(),
       listSchedule: List.empty(growable: true)
     );
   }

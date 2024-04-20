@@ -18,9 +18,6 @@ class GetStationBloc extends Bloc<GetStationEvent, GetStationState> {
         dynamic data = await apiService.getStation();
         BaseResponse<Station> baseResponse = BaseResponse<Station>.fromJson(data, (json) => Station.fromJson(json));
         List<Station> listTrainStation = baseResponse.data;
-        listTrainStation.forEach((element) {
-          print(element.name);
-        });
         emit(GetStationListSuccess(listTrainStation));
       } catch (e) {
         emit(GetStationListFailure());

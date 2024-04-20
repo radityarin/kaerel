@@ -1,5 +1,5 @@
-name: kaerel_repository
-description: "A repo to handle kaerel api functions"
+name: kaerel_utils
+description: "A repo to handle kaerel utils"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -14,8 +14,8 @@ dependencies:
   http: ^1.2.1
   flutter_json: ^0.0.3
   equatable: ^2.0.5
-  kaerel_utils:
-    path: ../kaerel_utils
+  kaerel_repository:
+    path: ../kaerel_repository
 
 dev_dependencies:
   flutter_test:
